@@ -1,13 +1,29 @@
-import os
-from dotenv import load_dotenv
+import logging
+import sys
+from game_workflow import GameWorkflow
 
-load_dotenv()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
-print("🎮 Agent Game Studio - Prototype")
-print("================================\n")
+def main():
+    try:
+        logging.info('Starting the game workflow...')
+        workflow = GameWorkflow()
+        workflow.run()  # Assuming the run method handles the complete workflow
+        logging.info('Workflow completed successfully.')
+        results = workflow.results  # Retrieve the results in a user-friendly format
+        display_results(results)
+    except Exception as e:
+        logging.error(f'An error occurred: {str(e)}')
+        sys.exit(1)  # Exit code 1 for errors
 
-game_concept = os.getenv("GAME_CONCEPT", "A simple 2D game")
-print(f"Game Concept: {game_concept}\n")
+def display_results(results):
+    if not results:
+        logging.warning('No results to display.')
+        return
+    logging.info('Displaying results...')
+    for key, value in results.items():
+        print(f'{key}: {value}')  # Format results in a user-friendly way
 
-# Placeholder for now
-print("✅ Setup complete! Agents coming next...")
+if __name__ == '__main__':
+    main()
