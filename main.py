@@ -1,6 +1,6 @@
 import logging
 import sys
-from game_workflow import GameWorkflow
+from workflow import GameWorkflow
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
