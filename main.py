@@ -1,10 +1,13 @@
-@echo off
+import os
+from dotenv import load_dotenv
 
-REM Create virtual environment
-python -m venv venv
+load_dotenv()
 
-REM Activate virtual environment
-call venv\Scripts\activate.bat
+print("🎮 Agent Game Studio - Prototype")
+print("================================\n")
 
-REM Run the main.py script
-python main.py
+game_concept = os.getenv("GAME_CONCEPT", "A simple 2D game")
+print(f"Game Concept: {game_concept}\n")
+
+# Placeholder for now
+print("✅ Setup complete! Agents coming next...")
