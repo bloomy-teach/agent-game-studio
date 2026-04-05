@@ -4,7 +4,11 @@
 import logging
 import os
 from typing import TypedDict
-import requests
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 class AgentConfig(TypedDict):
     ollama_url: str
