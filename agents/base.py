@@ -1,65 +1,42 @@
-
-
+from __future__ import annotations
 
 import logging
 import os
-from typing import TypedDict
+from typing import Any
 
-try:
-    import requests
-except ImportError:
-    requests = None
+import requests
 
-class AgentConfig(TypedDict):
-    ollama_url: str
-    model_name: str
+logger = logging.getLogger(__name__)
+
 
 class BaseAgent:
-    def __init__(self, config: AgentConfig) -> None:
-        """
-        Initialize the BaseAgent with configuration.
+    name: str
+    version: str
+    ollama_url: str
+    model: str
 
-        Args:
-            config (AgentConfig): Configuration containing Ollama URL and model name.
-        """
-        self.ollama_url = config['ollama_url']
-        self.model_name = config['model_name']
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(
+        self,
+        *,
+        name: str,
+        version: str,
+        ollama_url: str | None = None,
+        model: str | None = None,
+    ) -> None:
+        self.name = name
+        self.version = version
+        self.ollama_url = (ollama_url or os.getenv("OLLAMA_API_URL") or "http://localhost:11434").rstrip("/")
+        self.model = model or os.getenv("MODEL_NAME") or "llama3.1"
 
-    def generate(self, prompt: str) -> str:
-        """
-        Generate a response from the Ollama API.
+    def generate(self, prompt: str, *, timeout_s: int = 300) -> str:
+        url = f"{self.ollama_url}/api/generate"
+        payload: dict[str, Any] = {"model": self.model, "prompt": prompt, "stream": False}
 
-        Args:
-            prompt (str): The prompt to send to the API.
-
-        Returns:
-            str: The API response.
-
-        Raises:
-            RuntimeError: If an error occurs while calling the API.
-        """
         try:
-            response = requests.post(f"{self.ollama_url}/generate", json={'model': self.model_name, 'prompt': prompt})
-            response.raise_for_status()
-            return response.json().get('response', '')
+            resp = requests.post(url, json=payload, timeout=timeout_s)
+            resp.raise_for_status()
+            data = resp.json()
+            return str(data.get("response", "")).strip()
         except requests.RequestException as e:
-            self.logger.error(f"Error calling Ollama API: {e}")
-            raise RuntimeError(f"Failed to generate response: {e}")
-
-    def perform_task(self, task: str) -> None:
-        """
-        Perform a specified task.
-
-        Args:
-            task (str): The task to perform.
-
-        Logs the task performance operation.
-        """
-        self.logger.info(f"Performing task: {task}")
-
-    def __repr__(self) -> str:
-        return f"<BaseAgent(ollama_url='{self.ollama_url}', model_name='{self.model_name}')>"
-
-    def __str__(self) -> str:
-        return f"BaseAgent with model '{self.model_name}' at '{self.ollama_url}'"
+            logger.error("Ollama request failed url=%s model=%s err=%s", url, self.model, e, exc_info=True)
+            raise RuntimeError(f"Ollama request failed: {e}") from e
